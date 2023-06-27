@@ -2,7 +2,6 @@ module main
 
 import os
 import arrays
-import maps
 
 struct R_Package {
 	install string
@@ -33,13 +32,11 @@ fn r_package_parse(items []string) map[string][]string {
 		return pkg_name.map(R_Package{ install: install_name, pkg: it })
 	})
 	pkg_line := arrays.flatten(lines)
-	grouped_line := arrays.group_by[string, R_Package](pkg_line, fn (term R_Package) string {
-		return term.install
-	})
-	parsed := maps.to_map[string, []R_Package, string, []string](grouped_line, fn (name string, terms []R_Package) (string, []string) {
-		return name, terms.map(it.pkg)
-	})
-	return parsed
+	mut grouped_line := map[string][]string{}
+	for item in pkg_line {
+		grouped_line[item.install] << item.pkg
+	}
+	return grouped_line
 }
 
 fn main() {
