@@ -2,6 +2,7 @@ module main
 
 import os
 import parser
+import arrays
 
 fn collect_lines() []string {
 	mut lines := []string{}
@@ -10,7 +11,7 @@ fn collect_lines() []string {
 	for item in files {
 		file := os.read_file(item) or { panic(err) }
 		data := file.split('RUN').filter(!it.is_blank()).map(it.trim_space())
-		pkgs := data.map(it.replace_each(['\n', '', '\\', '']))
+		pkgs := arrays.flatten(data.map(it.replace_each(['\n', '', '\\', '']).split('&&')))
 		lines << pkgs
 	}
 	return lines
@@ -19,5 +20,6 @@ fn collect_lines() []string {
 fn main() {
 	installs := collect_lines()
 	pkgs := parser.r_package_collect(installs)
+    // window array in map and write out to Dockerfile
 	println(pkgs)
 }
