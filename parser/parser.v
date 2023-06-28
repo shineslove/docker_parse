@@ -20,16 +20,24 @@ fn install_parse(word string, name string) string {
 }
 
 fn r_package_parse(word string) []R_Package {
-	pkg := install_parse(word, 'R')
+	pkg := install_parse(word, 'R').split(';').filter(!it.contains_any_substr([
+		'library',
+		'usethis',
+	])).join('')
 	trim_pkg := pkg.replace_each(['"', '', "'", ''])
-	install_name := trim_pkg.all_before('(')
-	pkg_name := trim_pkg.all_after('(')
+	install_name := trim_pkg.all_before('(').trim_space()
+	pkg_name := trim_pkg.find_between('(', ')')
 	parsed_pkg := if pkg_name.contains('=') {
 		[pkg_name.all_before(')')]
+	} else if pkg_name.is_blank() {
+		[]string{}
 	} else {
 		pkg_name.trim('c(').all_before(')').split(',')
 	}
-	return parsed_pkg.map(R_Package{ install: install_name, pkg: it })
+	return parsed_pkg.map(R_Package{
+		install: install_name
+		pkg: it.split(' ').filter(!it.is_blank()).join(' ')
+	})
 }
 
 pub fn r_package_collect(items []string) map[string][]string {
