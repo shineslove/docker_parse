@@ -7,8 +7,8 @@ struct R_Package {
 	pkg     string
 }
 
-fn normalize_spaces(input string) string{
-    return input.trim_space().split(' ').filter(!it.is_blank()).join(' ')
+fn normalize_spaces(input string) string {
+	return input.trim_space().split(' ').filter(!it.is_blank()).join(' ')
 }
 
 fn install_parse(word string, name string) string {
@@ -51,10 +51,12 @@ pub fn r_package_collect(items []string) map[string][]string {
 	lines := data.map(r_package_parse)
 	pkg_line := arrays.flatten(lines)
 	mut grouped_line := map[string][]string{}
+    mut list_pkgs := []string{}
 	for item in pkg_line {
-        if !item.install.contains("<-"){
-            grouped_line[item.install] << item.pkg
-        }
+		if !item.install.contains('<-') && item.pkg !in list_pkgs {
+            list_pkgs << item.pkg
+			grouped_line[item.install] << item.pkg
+		}
 	}
 	return grouped_line
 }

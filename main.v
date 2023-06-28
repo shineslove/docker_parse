@@ -17,9 +17,23 @@ fn collect_lines() []string {
 	return lines
 }
 
+fn write_dockerfile_r(run_pkgs map[string][]string, size int) {
+	mut file := os.create('Dockerfile') or { panic(err) }
+	defer {
+		file.close()
+	}
+	for install, package in run_pkgs {
+		split_pkgs := arrays.chunk(package, size)
+		for pkg in split_pkgs {
+			quoted_pkgs := pkg.map('\'${it}\'').join(',')
+			file.writeln('RUN R --no-save -e ${install}(c(${quoted_pkgs}))') or { panic(err) }
+		}
+	}
+}
+
 fn main() {
+    // TODO: implement pip packages
 	installs := collect_lines()
 	pkgs := parser.r_package_collect(installs)
-    // window array in map and write out to Dockerfile
-	println(pkgs)
+	write_dockerfile_r(pkgs, 8)
 }
