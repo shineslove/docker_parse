@@ -11,12 +11,35 @@ fn normalize_spaces(input string) string {
 	return input.trim_space().split(' ').filter(!it.is_blank()).join(' ')
 }
 
+pub fn apt_package_parse(lines []string) []string {
+	items := lines.filter(fn (line string) bool {
+		return !line.contains_any_substr(['pip ', 'R '])
+	})
+	pkg := items.map(it.split(' ').filter(!it.is_blank()).join(' '))
+	return pkg
+}
+
+pub fn pip_package_parse(lines []string) []string {
+	items := lines.filter(fn (line string) bool {
+		return line.contains('pip ')
+	})
+	pkgs := items.map(install_parse(it, 'pip').replace("'", '').split(' '))
+	data := arrays.flatten(pkgs)
+	names := data.filter(!it.starts_with('-'))
+	mut unique := []string{}
+	for item in names {
+		base_pkg := item.split('==')[0]
+		if base_pkg !in unique {
+			unique << item
+		}
+	}
+	return unique
+}
+
 fn install_parse(word string, name string) string {
-	// package parse function: pip, R, apt
 	check := match true {
 		name.contains('R') { ['R', '', '--no-save', '', '-e', '', '--no save', ''] }
 		name.contains('pip') { ['pip', '', 'install', ''] }
-		name.contains('apt') { ['apt', ''] }
 		else { [''] }
 	}
 	valid := normalize_spaces(word.replace_each(check))
@@ -51,10 +74,10 @@ pub fn r_package_collect(items []string) map[string][]string {
 	lines := data.map(r_package_parse)
 	pkg_line := arrays.flatten(lines)
 	mut grouped_line := map[string][]string{}
-    mut list_pkgs := []string{}
+	mut list_pkgs := []string{}
 	for item in pkg_line {
 		if !item.install.contains('<-') && item.pkg !in list_pkgs {
-            list_pkgs << item.pkg
+			list_pkgs << item.pkg
 			grouped_line[item.install] << item.pkg
 		}
 	}
